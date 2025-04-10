@@ -329,139 +329,94 @@ def cap_outliers_with_iqr(df, filtered_columns):
     return df_out, outliers_dict
 
 
-
-
-
-def group_wind_directions(df, wind_dir_columns):
-    """
-    Reduces 16 wind direction categories to 8, using angular midpoint logic.
-
-    Parameters:
-    - df: pandas DataFrame containing the wind direction columns
-    - wind_dir_columns: list of column names to transform
-
-    Returns:
-    - df: original DataFrame with additional '_Grouped' columns for each input column
-    """
-    df_out = df.copy()
-
-    # Dictionary with degrees of the 16 wind directions
-    wind_direction_degrees = {
-        'N': 0,
-        'NNE': 22.5,
-        'NE': 45,
-        'ENE': 67.5,
-        'E': 90,
-        'ESE': 112.5,
-        'SE': 135,
-        'SSE': 157.5,
-        'S': 180,
-        'SSW': 202.5,
-        'SW': 225,
-        'WSW': 247.5,
-        'W': 270,
-        'WNW': 292.5,
-        'NW': 315,
-        'NNW': 337.5
-    }
-
-    # Group for the 8 main directions
-    def map_to_8_dirs(direction):
-        if pd.isna(direction):
-            return np.nan
-        deg = wind_direction_degrees.get(direction)
-        if deg is None:
-            return np.nan
-        
-        if deg >= 337.5 or deg < 22.5:
-            return 'N'
-        elif 22.5 <= deg < 67.5:
-            return 'NE'
-        elif 67.5 <= deg < 112.5:
-            return 'E'
-        elif 112.5 <= deg < 157.5:
-            return 'SE'
-        elif 157.5 <= deg < 202.5:
-            return 'S'
-        elif 202.5 <= deg < 247.5:
-            return 'SW'
-        elif 247.5 <= deg < 292.5:
-            return 'W'
-        elif 292.5 <= deg < 337.5:
-            return 'NW'
-        else:
-            return np.nan
-
-    # Mmap each wind direction column to 8 main directions
-    for col in wind_dir_columns:
-        df_out[col] = df_out[col].map(map_to_8_dirs)
-
-    return df_out
-
-
-
-
-
-
-
-
-
-"""
-direction_to_degrees = {
-    'N': 0, 'NE': 45, 'E': 90, 'SE': 135,
-    'S': 180, 'SW': 225, 'W': 270, 'NW': 315
+wind_direction_to_degrees = {
+    'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5, 'E': 90, 'ESE': 112.5,
+    'SE': 135, 'SSE': 157.5, 'S': 180, 'SSW': 202.5, 'SW': 225, 
+    'WSW': 247.5, 'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5
 }
 
 degrees_to_direction = {
-    (337.5, 360): 'N', (0, 22.5): 'N',
+    (0, 22.5): 'N',
     (22.5, 67.5): 'NE',
     (67.5, 112.5): 'E',
     (112.5, 157.5): 'SE',
     (157.5, 202.5): 'S',
     (202.5, 247.5): 'SW',
     (247.5, 292.5): 'W',
-    (292.5, 337.5): 'NW'
+    (292.5, 337.5): 'NW',
+    (337.5, 360): 'N'
 }
 
 def degrees_to_cardinal(deg):
+    """
+    Converts a degree value into one of the 8 cardinal directions.
+    """
     for (low, high), direction in degrees_to_direction.items():
         if low <= deg < high or (low > high and (deg >= low or deg < high)):
             return direction
     return np.nan
 
-def impute_wind_directions(df, columns):
+def impute_wind_directions(df, wind_dir_columns):
+    """
+    Imputes missing values in wind direction columns by:
+    1. Converting to degrees.
+    2. Imputing using IterativeImputer, city by city.
+    3. Converting back to 8 cardinal directions.
+
+    Parameters:
+    - df: DataFrame with wind direction columns.
+    - wind_dir_columns: list of column names to impute.
+
+    Returns:
+    - A DataFrame with imputed wind direction values.
+    """
     df_imputed = df.copy()
 
-    # Paso 1: convertir direcciones a grados
-    for col in columns:
-        df_imputed[col + '_deg'] = df_imputed[col].map(direction_to_degrees)
+    # Step 1: Convert directions to degrees
+    deg_cols = []
+    for col in wind_dir_columns:
+        deg_col = col + '_deg'
+        df_imputed[deg_col] = df_imputed[col].map(wind_direction_to_degrees)
+        deg_cols.append(deg_col)
 
-    # Paso 2: imputar los grados ciudad por ciudad
-    deg_columns = [col + '_deg' for col in columns]
-
+    ## Step 2: Impute degrees using IterativeImputer city by city
     for city in df_imputed['Location'].unique():
         mask = df_imputed['Location'] == city
-        city_data = df_imputed.loc[mask, deg_columns]
+        city_data = df_imputed.loc[mask, deg_cols]
 
-        # Excluir columnas completamente NaN
-        valid_columns = city_data.dropna(axis=1, how='all').columns.tolist()
+        valid_cols = city_data.dropna(axis=1, how='all').columns.tolist()
+        if valid_cols:
+            imputer = IterativeImputer(
+                max_iter=10,
+                random_state=42,
+                sample_posterior=True,
+                imputation_order='ascending',
+                n_nearest_features=5,
+                min_value=0,
+                max_value=360)
+            imputed_vals = imputer.fit_transform(city_data[valid_cols])
+            df_imputed.loc[mask, valid_cols] = imputed_vals
 
-        if len(valid_columns) > 0:
-            imputer = IterativeImputer(max_iter=10, 
-                                       random_state=42,
-                                       sample_posterior=True,
-                                       imputation_order='ascending',
-                                       n_nearest_features=5,
-                                       min_value=0, 
-                                       max_value=360)
-            imputed = imputer.fit_transform(city_data[valid_columns])
-            df_imputed.loc[mask, valid_columns] = imputed
-
-    # Paso 3: convertir grados nuevamente a direcciones
-    for col in columns:
+    # Step 3: Convert degrees back to directions
+    for col in wind_dir_columns:
         col_deg = col + '_deg'
-        df_imputed[col] = df_imputed[col_deg].apply(lambda x: degrees_to_cardinal(x) if not pd.isna(x) else np.nan)
-        df_imputed.drop(columns=[col_deg], inplace=True)
+        df_imputed[col] = df_imputed[col_deg].apply(lambda x: degrees_to_cardinal(x) if pd.notna(x) else np.nan)
+        df_imputed.drop(columns=col_deg, inplace=True)
 
     return df_imputed
-"""
+
+
+def one_hot_encoding(df, categorical_columns, drop_original=False, drop_first=False):
+    df_encoded = df.copy()
+
+    if isinstance(categorical_columns, str):
+        categorical_columns = [categorical_columns]
+
+    dummies = pd.get_dummies(df_encoded[categorical_columns], drop_first=drop_first)
+
+    df_encoded = pd.concat([df_encoded, dummies], axis=1)
+
+    if drop_original:
+        df_encoded.drop(columns=categorical_columns, inplace=True)
+
+    return df_encoded
