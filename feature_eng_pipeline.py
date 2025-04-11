@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import OneHotEncoder
 
@@ -118,7 +119,11 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
 
         df.dropna(subset=['Pressure3pm', 'Pressure9am'], how='all', inplace=True)
 
-        columns_to_remove = ['Week', 'Location_split', 'Latitude', 'Longitude']
+        df['Month'] = df['Date'].dt.month
+
+        df = df.sort_values(by=['Location', 'Date'], axis=0, ascending=[True, True])      
+
+        columns_to_remove = ['Week', 'Location_split', 'Location', 'Date']
         filtered_columns = []
         for col in df.columns.to_list():
             if col not in columns_to_remove:
@@ -127,7 +132,10 @@ class DataPreprocessor(BaseEstimator, TransformerMixin):
         df = df[filtered_columns]
         
         # One-hot encoding para State y viento
-        df = one_hot_encoding(df, 'State')
-        df = one_hot_encoding(df, wind_direction_columns)
+        df = one_hot_encoding(df, 'State', drop_original=True, drop_first=False)
+        df = one_hot_encoding(df, wind_direction_columns, drop_original=True, drop_first=False)
+
+        df['RainTomorrow'] = df['RainTomorrow'].astype('int64')
+        df['RainToday'] = df['RainToday'].astype('int64')
 
         return df
