@@ -1,36 +1,29 @@
 import joblib
 import os
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import LabelEncoder
-from feature_eng_pipeline import DataPreprocessor
-from automated_model_training import results
+from datetime import datetime
 
+
+results = joblib.load('data/model_output/training_results.pkl')
 
 # Create exit folder if does not exist
-output_dir = "model_output"
+output_dir = 'data/model_output'
 os.makedirs(output_dir, exist_ok=True)
 
 # Pick best model by AUC
-best_model_name = max(results, key=lambda x: results[x]['auc'] if results[x]['auc'] != "N/A" else -1)
+best_model_name = max(results, key=lambda x: results[x]['auc'] if results[x]['auc'] != 'N/A' else -1)
 best_model = results[best_model_name]['model']
-best_features = results[best_model_name]['features']
-
-# Save full pipeline for preproccesing + model
-final_pipeline = Pipeline([
-    ('preprocessing', DataPreprocessor()),
-    ('feature_selection', 'passthrough'),  # placeholder
-    ('model', best_model)
-])
-
-# ⚠️ Warning:
-# It is not possible to include SFS directly in the pipeline because it depends on the model
-# Solution: saving the model trained with the selected features
+selected_features = results[best_model_name]['features']
+le = results[best_model_name]['encoder']
 
 # Save model, features and label encoder
-le = LabelEncoder()
-joblib.dump(best_model, f"{output_dir}/best_model_{best_model_name}.pkl")
-joblib.dump(best_features, f"{output_dir}/best_features.pkl")
-joblib.dump(le, f"{output_dir}/label_encoder.pkl")
+joblib.dump(best_model, f'{output_dir}/best_model_{best_model_name}.pkl')
+joblib.dump(selected_features, f'{output_dir}/selected_features.pkl')
+joblib.dump(le, f'{output_dir}/label_encoder.pkl')
 
-print(f"\n💾 Modelo '{best_model_name}' guardado con AUC: {results[best_model_name]['auc']:.4f}")
-print(f"📁 Ubicación: {output_dir}/best_model_{best_model_name}.pkl")
+# Log
+print(f"\nModel '{best_model_name}' saved with AUC: {results[best_model_name]['auc']:.4f}")
+print(f'\nModel location: {output_dir}/best_model_{best_model_name}.pkl')
+print(f'\nFeatures location: {output_dir}/selected_features.pkl')
+print(f'\nEncoder location: {output_dir}/label_encoder.pkl')
+now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+print(f'\n✅ Process completed successfully at {now}')
