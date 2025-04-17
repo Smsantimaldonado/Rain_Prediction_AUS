@@ -5,6 +5,8 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 from sklearn.preprocessing import LabelEncoder
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from datetime import datetime
+import joblib
+
 
 
 def train_models_with_sfs(df, models_dict, preprocessor, target_column='RainTomorrow'):
@@ -24,6 +26,11 @@ def train_models_with_sfs(df, models_dict, preprocessor, target_column='RainTomo
 
     # Apply preproccessing
     df_clean = preprocessor.fit_transform(df)
+
+    # Create exit folder if does not exist and save data after feature engineering
+    output_dir = 'data/processed'
+    os.makedirs(output_dir, exist_ok=True)
+    df_clean.to_csv(os.path.join(output_dir, 'data_clean.csv'), index=False, encoding='utf-8')
 
     # Split X, y
     X = df_clean.drop(columns=target_column)
