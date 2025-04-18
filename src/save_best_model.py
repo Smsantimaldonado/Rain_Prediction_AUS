@@ -16,7 +16,7 @@ selected_features = results[best_model_name]['features']
 le = results[best_model_name]['encoder']
 
 # Save model, features and label encoder
-joblib.dump(best_model, f'{output_dir}/best_model_{best_model_name}.pkl')
+joblib.dump(best_model, f'{output_dir}/best_model_.pkl')
 joblib.dump(selected_features, f'{output_dir}/selected_features.pkl')
 joblib.dump(le, f'{output_dir}/label_encoder.pkl')
 
