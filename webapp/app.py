@@ -151,12 +151,9 @@ with tab2:
                         lat='Latitude',
                         lon='Longitude',
                         color='Prediction',
-                        # Considera un color_continuous_scale si Prediction es numérica (0/1)
-                        # Si es categórica ('Yes'/'No'), usa un color_discrete_map o simplemente deja Plotly manejarlo
                         color_continuous_scale='Bluered' if df_uploaded['Prediction'].dtype != 'object' else None,
-                        color_discrete_map={'No': 'blue', 'Yes': 'red'} if df_uploaded['Prediction'].dtype == 'object' else None, # Ejemplo si las etiquetas son 'Yes'/'No'
+                        color_discrete_map={'No': 'blue', 'Yes': 'red'} if df_uploaded['Prediction'].dtype == 'object' else None,
                         title='Geolocalized predictions',
-                        # scope='asia', # Podrías necesitar ajustar el scope o permitir al usuario seleccionarlo
                         labels={'Prediction': 'Rain?'}
                     )
                     st.plotly_chart(fig_map, use_container_width=True)
