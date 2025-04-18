@@ -5,6 +5,33 @@ Goal: Determine if it will rain the next day, in different cities in Australia, 
 Goal: Determine if it will rain the next day, in different cities in Australia, without relying solely on the repetition of values in the variables.
 
 graph TD
+
+    5076["User<br>External Actor"]
+    subgraph 5071["External Systems"]
+        5081["Geocoding Service<br>External Service (Nominatim/geopy)"]
+    end
+    subgraph 5072["Rain Prediction System"]
+        subgraph 5073["Data &amp; Model Storage"]
+            5080["File System Storage<br>CSV/Joblib Files"]
+        end
+        subgraph 5074["ML Pipeline"]
+            5078["Feature Engineering<br>Python/Pandas/Scikit-learn"]
+            5079["Model Training &amp; Saving<br>Python/Scikit-learn/Joblib"]
+        end
+        subgraph 5075["Web Application"]
+            5077["Prediction UI &amp; Logic<br>Streamlit/Pandas/Plotly"]
+        end
+        %% Edges at this level (grouped by source)
+        5078["Feature Engineering<br>Python/Pandas/Scikit-learn"] -->|Reads raw data| 5080["File System Storage<br>CSV/Joblib Files"]
+        5077["Prediction UI &amp; Logic<br>Streamlit/Pandas/Plotly"] -->|Loads model, encoder, feature data| 5080["File System Storage<br>CSV/Joblib Files"]
+        5079["Model Training &amp; Saving<br>Python/Scikit-learn/Joblib"] -->|Reads processed data| 5080["File System Storage<br>CSV/Joblib Files"]
+    end
+    %% Edges at this level (grouped by source)
+    5076["User<br>External Actor"] -->|Interacts with| 5077["Prediction UI &amp; Logic<br>Streamlit/Pandas/Plotly"]
+    5078["Feature Engineering<br>Python/Pandas/Scikit-learn"] -->|Uses for location enrichment| 5081["Geocoding Service<br>External Service (Nominatim/geopy)"]
+
+
+graph TD
     A[📂 weatherAUS.csv] --> B[🧹 Preprocesamiento <br> DataPreprocessor()]
     B --> C[🧪 Entrenamiento de modelos <br> train_models_with_sfs()]
     C --> D[📦 Guardado de resultados <br> training_results.pkl + log.txt]
