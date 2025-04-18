@@ -8,7 +8,7 @@ import plotly.express as px
 
 
 st.set_page_config(page_title='Rain Prediction – Input Explorer', layout='centered')
-st.title('☔ Rain Prediction App')
+st.title('☔ Australia Rain Prediction App')
 st.subheader("🔍 Will tomorrow rain? Let's find out")
 
 # ============================
@@ -80,7 +80,7 @@ with tab1:
     user_inputs = {}
 
     for feature, values in feature_ranges.items():
-        if isinstance(values, dict):  # numéricas
+        if isinstance(values, dict):  # numerical
             min_val = float(values['min'])
             max_val = float(values['max'])
             default_val = round((min_val + max_val) / 2, 2)
@@ -110,7 +110,7 @@ with tab2:
         try:
             df_uploaded = pd.read_csv(uploaded_file)
 
-            # Verificar columnas necesarias
+            # Check required columns
             missing_cols = []
             for col in selected_features:
                 if col not in df_uploaded.columns:
@@ -118,18 +118,18 @@ with tab2:
             if missing_cols:
                 st.error(f'❌ File does not contain correct columns: {missing_cols}')
             else:
-                # Asegurar el orden de columnas
+                # Ensure column orde
                 df_uploaded = df_uploaded[selected_features]
 
-                # Predecir
+                # Predict
                 predictions = model.predict(df_uploaded)
                 predicted_labels = encoder.inverse_transform(predictions)
 
-                # Añadir predicciones al dataframe
+                # Add predictions to dataframe
                 df_uploaded['Prediction'] = predicted_labels
 
                 # Show predictions
-                st.success('✅ Predctions done')
+                st.success('✅ Predictions done')
                 st.dataframe(df_uploaded)
 
 
@@ -140,24 +140,28 @@ with tab2:
                 fig_count, ax_count = plt.subplots()
                 sns.countplot(x='Prediction', data=df_uploaded, ax=ax_count)
                 ax_count.set_title('Prediction distribution')
-                ax_count.set_xticklabels(['No rain', 'Rain'])
+                ax_count.set_xticklabels(encoder.classes_) #ax_count.set_xticklabels(['No rain', 'Rain'])
                 st.pyplot(fig_count)
-                
+
                 # ================================
                 # 🗺️ 2. Geographic map of predictions
-                st.subheader('🗺️ Predictions maps by location')
-
-                fig_map = px.scatter_geo(
-                    df_uploaded,
-                    lat='Latitude',
-                    lon='Longitude',
-                    color='Prediction',
-                    color_continuous_scale='Bluered',
-                    title='Geolocalized predictions',
-                    scope='australia',
-                    labels={'Prediction': 'Rain?'}
-                )
-                st.plotly_chart(fig_map, use_container_width=True)
+                if 'Latitude' in df_uploaded.columns and 'Longitude' in df_uploaded.columns:
+                    fig_map = px.scatter_geo(
+                        df_uploaded,
+                        lat='Latitude',
+                        lon='Longitude',
+                        color='Prediction',
+                        # Considera un color_continuous_scale si Prediction es numérica (0/1)
+                        # Si es categórica ('Yes'/'No'), usa un color_discrete_map o simplemente deja Plotly manejarlo
+                        color_continuous_scale='Bluered' if df_uploaded['Prediction'].dtype != 'object' else None,
+                        color_discrete_map={'No': 'blue', 'Yes': 'red'} if df_uploaded['Prediction'].dtype == 'object' else None, # Ejemplo si las etiquetas son 'Yes'/'No'
+                        title='Geolocalized predictions',
+                        # scope='asia', # Podrías necesitar ajustar el scope o permitir al usuario seleccionarlo
+                        labels={'Prediction': 'Rain?'}
+                    )
+                    st.plotly_chart(fig_map, use_container_width=True)
+                else:
+                    st.warning("Latitude and Longitude columns are required for the map and were not found in the uploaded file.")
 
                 # ================================
                 # Option to download results
