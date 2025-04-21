@@ -53,7 +53,7 @@ def train_models_with_sfs(df, models_dict, preprocessor, target_column='RainTomo
 
         # Feature selection
         sfs = SFS(model,
-                    k_features=10,
+                    k_features=15,
                     forward=True,
                     floating=False,
                     scoring='accuracy',

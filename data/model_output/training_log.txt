@@ -1,0 +1,19 @@
+
+Training time: 2025-04-18 19:54:21
+==================================================
+Model: LogisticRegression
+Features: ['Rainfall', 'WindGustSpeed', 'WindSpeed3pm', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'RainToday', 'Latitude', 'State_Australian Capital Territory', 'WindGustDir_S', 'WindDir9am_E', 'WindDir9am_NW', 'WindDir9am_S', 'WindDir9am_SW', 'WindDir3pm_NE']
+ROC AUC: 0.8367
+
+Model: DecisionTree
+Features: ['WindGustSpeed', 'Humidity3pm', 'Longitude', 'State_Australian Capital Territory', 'State_New South Wales', 'State_Queensland', 'WindGustDir_E', 'WindGustDir_NW', 'WindGustDir_W', 'WindDir9am_E', 'WindDir9am_N', 'WindDir3pm_E', 'WindDir3pm_NW', 'WindDir3pm_SE', 'WindDir3pm_W']
+ROC AUC: 0.8163
+
+Model: RandomForest
+Features: ['Humidity3pm', 'RainToday', 'State_Queensland', 'WindGustDir_E', 'WindGustDir_N', 'WindGustDir_NE', 'WindGustDir_NW', 'WindGustDir_S', 'WindGustDir_SE', 'WindGustDir_SW', 'WindGustDir_W', 'WindDir3pm_N', 'WindDir3pm_NW', 'WindDir3pm_S', 'WindDir3pm_W']
+ROC AUC: 0.7778
+
+Model: GradientBoosting
+Features: ['Rainfall', 'WindGustSpeed', 'WindSpeed3pm', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Latitude', 'Longitude', 'Month', 'State_Australian Capital Territory', 'State_Queensland', 'WindGustDir_NE', 'WindGustDir_NW', 'WindDir9am_NW', 'WindDir3pm_NW']
+ROC AUC: 0.86
+
